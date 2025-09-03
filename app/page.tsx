@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Clock, BookOpen, Sparkles } from "lucide-react";
+import Link from 'next/link';
+import { Clock, BookOpen, Sparkles } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -15,13 +15,13 @@ export default function Home() {
       {/* Hero */}
       <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-24 text-center">
         <h1 className="text-balance text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl leading-tight">
-          Cron Expressions{" "}
+          Cron Expressions{' '}
           <span className="bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
             Made Simple
           </span>
         </h1>
 
-        <p className="max-w-2xl text-balance text-base sm:text-lg text-muted-foreground">
+        <p className="max-w-4xl text-balance text-base sm:text-lg text-muted-foreground">
           No more syntax headaches. Just describe your schedule in plain English
           and let CronEase generate the perfect cron expression — with
           explanations and next run times.
@@ -58,18 +58,18 @@ export default function Home() {
         {[
           {
             icon: Sparkles,
-            title: "Plain English → Cron",
-            desc: "Type schedules like “every 5 minutes” and let AI handle the rest.",
+            title: 'Plain English → Cron',
+            desc: 'Type schedules like “every 5 minutes” and let AI handle the rest.',
           },
           {
             icon: BookOpen,
-            title: "Clear Explanations",
-            desc: "Understand what each cron means in simple words.",
+            title: 'Clear Explanations',
+            desc: 'Understand what each cron means in simple words.',
           },
           {
             icon: Clock,
-            title: "Next Run Times",
-            desc: "Instantly preview the upcoming 10 execution times.",
+            title: 'Next Run Times',
+            desc: 'Instantly preview the upcoming 10 execution times.',
           },
         ].map((item, i) => (
           <div
