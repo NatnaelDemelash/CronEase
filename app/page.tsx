@@ -12,7 +12,7 @@ export default function Home() {
       ></div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-background/95 to-background"></div>
 
-      {/* Hero Content */}
+      {/* Hero */}
       <div className="container flex flex-col items-center justify-center gap-6 px-4 pt-24 text-center">
         <h1 className="text-balance text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl leading-tight">
           Cron Expressions{" "}
@@ -27,7 +27,7 @@ export default function Home() {
           explanations and next run times.
         </p>
 
-        {/* CTA buttons */}
+        {/* CTA */}
         <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row">
           <Link
             href="/generate"
@@ -53,29 +53,34 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Features */}
       <div className="container mt-20 grid gap-8 px-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="flex flex-col items-center rounded-xl border bg-card p-6 text-center shadow-sm">
-          <Sparkles className="h-8 w-8 text-primary" />
-          <h3 className="mt-3 font-semibold">Plain English → Cron</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Type schedules like “every 5 minutes” and let AI handle the rest.
-          </p>
-        </div>
-        <div className="flex flex-col items-center rounded-xl border bg-card p-6 text-center shadow-sm">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <h3 className="mt-3 font-semibold">Clear Explanations</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Understand what each cron means in simple words.
-          </p>
-        </div>
-        <div className="flex flex-col items-center rounded-xl border bg-card p-6 text-center shadow-sm">
-          <Clock className="h-8 w-8 text-primary" />
-          <h3 className="mt-3 font-semibold">Next Run Times</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Instantly preview the upcoming 10 execution times.
-          </p>
-        </div>
+        {[
+          {
+            icon: Sparkles,
+            title: "Plain English → Cron",
+            desc: "Type schedules like “every 5 minutes” and let AI handle the rest.",
+          },
+          {
+            icon: BookOpen,
+            title: "Clear Explanations",
+            desc: "Understand what each cron means in simple words.",
+          },
+          {
+            icon: Clock,
+            title: "Next Run Times",
+            desc: "Instantly preview the upcoming 10 execution times.",
+          },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="group flex flex-col items-center rounded-xl border bg-card p-6 text-center shadow-sm transition-transform hover:scale-105 hover:shadow-lg"
+          >
+            <item.icon className="h-10 w-10 text-primary transition-transform group-hover:rotate-6" />
+            <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{item.desc}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
