@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, Trash2 } from 'lucide-react';
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Copy, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
-type Mode = 'generate' | 'explain';
+type Mode = "generate" | "explain";
 
 export default function GenerateCronPage() {
-  const [query, setQuery] = useState('');
-  const [mode, setMode] = useState<Mode>('generate');
+  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<Mode>("generate");
   const [result, setResult] = useState<null | {
     cron: string;
     explanation: string;
@@ -29,10 +29,10 @@ export default function GenerateCronPage() {
       result: { cron: string; explanation: string; runs: string[] };
     }[]
   >([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // --- helpers
-  const cronLabels = ['Minute', 'Hour', 'Day of Month', 'Month', 'Day of Week'];
+  const cronLabels = ["Minute", "Hour", "Day of Month", "Month", "Day of Week"];
   const splitCron = (cron: string) => cron.trim().split(/\s+/);
 
   const isValidCron5 = (cron: string) => {
@@ -55,77 +55,95 @@ export default function GenerateCronPage() {
 
   // --- mock handlers (your API will replace these)
   const mockGenerate = (natural: string) => ({
-    cron: natural.toLowerCase().includes('every 5')
-      ? '*/5 * * * *'
-      : natural.toLowerCase().includes('2pm')
-      ? '0 14 * * *'
-      : natural.toLowerCase().includes('monday')
-      ? '0 9 * * 1'
-      : '0 9 * * 1',
-    explanation: natural.toLowerCase().includes('every 5')
-      ? 'Runs every 5 minutes.'
-      : natural.toLowerCase().includes('2pm')
-      ? 'Runs every day at 2:00 PM.'
-      : natural.toLowerCase().includes('monday')
-      ? 'Runs every Monday at 9:00 AM.'
-      : 'This cron runs every Monday at 9:00 AM.',
+    cron: natural.toLowerCase().includes("every 5")
+      ? "*/5 * * * *"
+      : natural.toLowerCase().includes("2pm")
+      ? "0 14 * * *"
+      : natural.toLowerCase().includes("monday")
+      ? "0 9 * * 1"
+      : "0 9 * * 1",
+    explanation: natural.toLowerCase().includes("every 5")
+      ? "Runs every 5 minutes."
+      : natural.toLowerCase().includes("2pm")
+      ? "Runs every day at 2:00 PM."
+      : natural.toLowerCase().includes("monday")
+      ? "Runs every Monday at 9:00 AM."
+      : "This cron runs every Monday at 9:00 AM.",
     runs: [
-      'Mon Sep 8 09:00:00',
-      'Mon Sep 15 09:00:00',
-      'Mon Sep 22 09:00:00',
-      'Mon Sep 29 09:00:00',
-      'Mon Oct 6 09:00:00',
-      'Mon Oct 13 09:00:00',
-      'Mon Oct 20 09:00:00',
-      'Mon Oct 27 09:00:00',
-      'Mon Nov 3 09:00:00',
-      'Mon Nov 10 09:00:00',
+      "Mon Sep 8 09:00:00",
+      "Mon Sep 15 09:00:00",
+      "Mon Sep 22 09:00:00",
+      "Mon Sep 29 09:00:00",
+      "Mon Oct 6 09:00:00",
+      "Mon Oct 13 09:00:00",
+      "Mon Oct 20 09:00:00",
+      "Mon Oct 27 09:00:00",
+      "Mon Nov 3 09:00:00",
+      "Mon Nov 10 09:00:00",
     ],
   });
 
   const mockExplain = (cron: string) => ({
     cron,
     explanation:
-      cron === '*/5 * * * *'
-        ? 'Runs every 5 minutes.'
-        : cron === '0 14 * * *'
-        ? 'Runs every day at 2:00 PM.'
-        : cron === '0 9 * * 1'
-        ? 'Runs every Monday at 9:00 AM.'
-        : 'This cron runs every Monday at 9:00 AM.',
+      cron === "*/5 * * * *"
+        ? "Runs every 5 minutes."
+        : cron === "0 14 * * *"
+        ? "Runs every day at 2:00 PM."
+        : cron === "0 9 * * 1"
+        ? "Runs every Monday at 9:00 AM."
+        : "This cron runs every Monday at 9:00 AM.",
     runs: [
-      'Mon Sep 8 09:00:00',
-      'Mon Sep 15 09:00:00',
-      'Mon Sep 22 09:00:00',
-      'Mon Sep 29 09:00:00',
-      'Mon Oct 6 09:00:00',
-      'Mon Oct 13 09:00:00',
-      'Mon Oct 20 09:00:00',
-      'Mon Oct 27 09:00:00',
-      'Mon Nov 3 09:00:00',
-      'Mon Nov 10 09:00:00',
+      "Mon Sep 8 09:00:00",
+      "Mon Sep 15 09:00:00",
+      "Mon Sep 22 09:00:00",
+      "Mon Sep 29 09:00:00",
+      "Mon Oct 6 09:00:00",
+      "Mon Oct 13 09:00:00",
+      "Mon Oct 20 09:00:00",
+      "Mon Oct 27 09:00:00",
+      "Mon Nov 3 09:00:00",
+      "Mon Nov 10 09:00:00",
     ],
   });
 
   // --- submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!query.trim()) return;
 
-    if (mode === 'explain' && !isValidCron5(query)) {
-      setError('Please enter a valid 5-field cron (e.g., */5 * * * *).');
+    if (mode === "explain" && !isValidCron5(query)) {
+      setError("Please enter a valid 5-field cron (e.g., */5 * * * *).");
       return;
     }
 
-    const newResult =
-      mode === 'generate' ? mockGenerate(query) : mockExplain(query);
-    setResult(newResult);
-    setHistory((prev) => [
-      { query, mode, result: newResult },
-      ...prev.slice(0, 4),
-    ]);
+    try {
+      const res = await fetch(`/api/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          mode === "generate" ? { natural: query } : { cron: query }
+        ),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong.");
+        return;
+      }
+
+      setResult(data);
+      setHistory((prev) => [
+        { query, mode, result: data },
+        ...prev.slice(0, 4),
+      ]);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch result.");
+    }
   };
 
   const handleHistoryClick = (item: {
@@ -136,12 +154,12 @@ export default function GenerateCronPage() {
     setQuery(item.query);
     setMode(item.mode);
     setResult(item.result);
-    setError('');
+    setError("");
   };
 
   const handlePreset = (preset: string) => {
     setQuery(preset);
-    setError('');
+    setError("");
   };
 
   const clearHistory = () => setHistory([]);
@@ -151,12 +169,12 @@ export default function GenerateCronPage() {
       {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold sm:text-4xl">
-          {mode === 'generate' ? 'Generate a Cron' : 'Explain a Cron'}
+          {mode === "generate" ? "Generate a Cron" : "Explain a Cron"}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {mode === 'generate'
-            ? 'Type a plain English schedule below and let CronEase do the magic ✨'
-            : 'Paste a cron expression to get a plain English explanation and next run times.'}
+          {mode === "generate"
+            ? "Type a plain English schedule below and let CronEase do the magic ✨"
+            : "Paste a cron expression to get a plain English explanation and next run times."}
         </p>
       </div>
 
@@ -164,21 +182,21 @@ export default function GenerateCronPage() {
       <div className="flex justify-center mb-6">
         <div className="flex rounded-md shadow-sm">
           <Button
-            onClick={() => setMode('generate')}
+            onClick={() => setMode("generate")}
             className={`rounded-r-none ${
-              mode === 'generate'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              mode === "generate"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             Plain English to Cron
           </Button>
           <Button
-            onClick={() => setMode('explain')}
+            onClick={() => setMode("explain")}
             className={`rounded-l-none ${
-              mode === 'explain'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              mode === "explain"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             Cron to Plain English
@@ -190,10 +208,10 @@ export default function GenerateCronPage() {
       <form onSubmit={handleSubmit} className="mx-auto flex max-w-2xl gap-2">
         <Input
           aria-label={
-            mode === 'generate' ? 'Natural language input' : 'Cron input'
+            mode === "generate" ? "Natural language input" : "Cron input"
           }
           placeholder={
-            mode === 'generate'
+            mode === "generate"
               ? 'e.g. "Run every Monday at 9am"'
               : 'e.g. "*/5 * * * *"'
           }
@@ -201,7 +219,7 @@ export default function GenerateCronPage() {
           onChange={(e) => setQuery(e.target.value)}
         />
         <Button type="submit">
-          {mode === 'generate' ? 'Generate' : 'Explain'}
+          {mode === "generate" ? "Generate" : "Explain"}
         </Button>
       </form>
 
@@ -240,7 +258,7 @@ export default function GenerateCronPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>
-                  {mode === 'generate' ? 'Cron Expression' : 'Your Cron'}
+                  {mode === "generate" ? "Cron Expression" : "Your Cron"}
                 </CardTitle>
                 <Button
                   size="icon"
@@ -337,9 +355,9 @@ export default function GenerateCronPage() {
                           {item.query}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.mode === 'generate'
-                            ? 'English to Cron'
-                            : 'Cron to English'}
+                          {item.mode === "generate"
+                            ? "English to Cron"
+                            : "Cron to English"}
                         </p>
                       </li>
                     ))}
