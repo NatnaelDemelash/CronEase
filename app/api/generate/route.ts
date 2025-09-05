@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    // 1) Ask your model for cron + explanation
+    // 1) Call OpenRouter to convert natural text to cron + explanation
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {

@@ -54,66 +54,13 @@ export default function GenerateCronPage() {
     explain: [`*/5 * * * *`, `0 14 * * *`, `0 9 * * 1`, `0 0 1 * *`],
   };
 
-  // --- mock handlers (your API will replace these)
-  const mockGenerate = (natural: string) => ({
-    cron: natural.toLowerCase().includes("every 5")
-      ? "*/5 * * * *"
-      : natural.toLowerCase().includes("2pm")
-      ? "0 14 * * *"
-      : natural.toLowerCase().includes("monday")
-      ? "0 9 * * 1"
-      : "0 9 * * 1",
-    explanation: natural.toLowerCase().includes("every 5")
-      ? "Runs every 5 minutes."
-      : natural.toLowerCase().includes("2pm")
-      ? "Runs every day at 2:00 PM."
-      : natural.toLowerCase().includes("monday")
-      ? "Runs every Monday at 9:00 AM."
-      : "This cron runs every Monday at 9:00 AM.",
-    runs: [
-      "Mon Sep 8 09:00:00",
-      "Mon Sep 15 09:00:00",
-      "Mon Sep 22 09:00:00",
-      "Mon Sep 29 09:00:00",
-      "Mon Oct 6 09:00:00",
-      "Mon Oct 13 09:00:00",
-      "Mon Oct 20 09:00:00",
-      "Mon Oct 27 09:00:00",
-      "Mon Nov 3 09:00:00",
-      "Mon Nov 10 09:00:00",
-    ],
-  });
-
-  const mockExplain = (cron: string) => ({
-    cron,
-    explanation:
-      cron === "*/5 * * * *"
-        ? "Runs every 5 minutes."
-        : cron === "0 14 * * *"
-        ? "Runs every day at 2:00 PM."
-        : cron === "0 9 * * 1"
-        ? "Runs every Monday at 9:00 AM."
-        : "This cron runs every Monday at 9:00 AM.",
-    runs: [
-      "Mon Sep 8 09:00:00",
-      "Mon Sep 15 09:00:00",
-      "Mon Sep 22 09:00:00",
-      "Mon Sep 29 09:00:00",
-      "Mon Oct 6 09:00:00",
-      "Mon Oct 13 09:00:00",
-      "Mon Oct 20 09:00:00",
-      "Mon Oct 27 09:00:00",
-      "Mon Nov 3 09:00:00",
-      "Mon Nov 10 09:00:00",
-    ],
-  });
-
   // --- submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Submitting:", { query, mode });
     setLoading(true);
     setError("");
+    setResult(null);
 
     if (!query.trim()) return;
 
@@ -272,7 +219,7 @@ export default function GenerateCronPage() {
       )}
 
       {/* Results */}
-      {result && (
+      {!loading && result && (
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {/* Main Results */}
           <div className="space-y-6 lg:col-span-2">
