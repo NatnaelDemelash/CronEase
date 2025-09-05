@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Loader, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +30,7 @@ export default function GenerateCronPage() {
     }[]
   >([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // --- helpers
   const cronLabels = ["Minute", "Hour", "Day of Month", "Month", "Day of Week"];
@@ -110,6 +111,8 @@ export default function GenerateCronPage() {
   // --- submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting:", { query, mode });
+    setLoading(true);
     setError("");
 
     if (!query.trim()) return;
@@ -130,6 +133,8 @@ export default function GenerateCronPage() {
 
       const data = await res.json();
 
+      console.log("API response:", data);
+
       if (!res.ok) {
         setError(data.error || "Something went wrong.");
         return;
@@ -143,6 +148,8 @@ export default function GenerateCronPage() {
     } catch (err) {
       console.error(err);
       setError("Failed to fetch result.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -218,8 +225,14 @@ export default function GenerateCronPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <Button type="submit">
-          {mode === "generate" ? "Generate" : "Explain"}
+        <Button type="submit" disabled={loading}>
+          {loading ? (
+            <Loader className="h-4 w-4 animate-spin" />
+          ) : mode === "generate" ? (
+            "Generate"
+          ) : (
+            "Explain"
+          )}
         </Button>
       </form>
 
@@ -247,6 +260,12 @@ export default function GenerateCronPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {loading && (
+        <p className="text-gray-500 animate-pulse text-center mt-6">
+          ⏳ Working on it...
+        </p>
       )}
 
       {/* Results */}

@@ -25,12 +25,12 @@ export async function POST(req: Request) {
             {
               role: "system",
               content:
-                "You are a helpful assistant that converts plain English schedules into cron expressions and explains them.",
+                "You are a helpful assistant that converts plain English schedules into cron expressions and explains them. Always respond with valid JSON only.",
             },
             {
               role: "user",
               content: `Convert this schedule to a cron expression: "${natural}". 
-                      Return JSON in this shape:
+                      Return JSON in this shape exactly:
                       { "cron": "...", "explanation": "...", "runs": ["...", "..."] }`,
             },
           ],
@@ -40,12 +40,23 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    // Extract the model’s reply
-    const raw = data.choices?.[0]?.message?.content;
+    let raw = data.choices?.[0]?.message?.content || "";
+    raw = raw.replace(/```(json)?/g, "").trim();
 
-    return NextResponse.json(JSON.parse(raw));
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      console.error("Bad JSON from model:", raw);
+      return NextResponse.json(
+        { error: "AI returned invalid JSON" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(parsed);
   } catch (error) {
-    console.error(error);
+    console.error("Generate API error:", error);
     return NextResponse.json(
       { error: "Failed to generate cron" },
       { status: 500 }
