@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Loader, Trash2 } from "lucide-react";
+import { Copy, Loader, Loader2, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -263,9 +263,12 @@ export default function GenerateCronPage() {
       )}
 
       {loading && (
-        <p className="text-gray-500 animate-pulse text-center mt-6">
-          ⏳ Working on it...
-        </p>
+        <div className="flex flex-col items-center justify-center mt-6 space-y-2">
+          <Loader2 className="h-10 w-10 text-green-500 animate-spin" />
+          <p className="text-gray-500 animate-pulse text-sm">
+            Working on it...
+          </p>
+        </div>
       )}
 
       {/* Results */}
