@@ -292,10 +292,11 @@ export default function GenerateCronPage() {
                 <CardTitle>Next 10 Runs</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground max-h-48 overflow-y-auto">
-                  {/* Corrected: Map over `nextRuns` with explicit types */}
+                <ul className="list-disc pl-4 space-y-1 text-xs max-h-48 overflow-y-auto">
                   {result.nextRuns.map((run: string, i: number) => (
-                    <li key={i}>{run}</li>
+                    <li key={i} className="text-muted-foreground font-mono">
+                      {run}
+                    </li>
                   ))}
                 </ul>
               </CardContent>
