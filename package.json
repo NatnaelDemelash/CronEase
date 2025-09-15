@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "cron-parser": "^5.3.1",
     "croner": "^9.1.0",
+    "cronstrue": "^3.3.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",

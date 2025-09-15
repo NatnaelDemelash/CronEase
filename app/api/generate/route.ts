@@ -1,113 +1,149 @@
-// app/api/generate/route.ts
-export const runtime = "nodejs";
+import { NextResponse } from 'next/server';
+import cronstrue from 'cronstrue';
+import { CronExpressionParser } from 'cron-parser';
 
-import { NextResponse } from "next/server";
-import { format } from "date-fns";
-import { Cron } from "croner";
+// --- Human → Cron conversion ---
+function humanToCron(input: string): string | null {
+  const text = input.toLowerCase().trim();
 
-type AiShape = { cron?: string; explanation?: string };
-
-function json(status: number, body: unknown) {
-  return NextResponse.json(body, { status });
-}
-
-export async function POST(req: Request) {
-  const { natural } = (await req.json().catch(() => ({}))) as {
-    natural?: string;
-  };
-
-  if (!natural) {
-    return json(400, { ok: false, error: "Natural text is required." });
+  // Interval: "every 5 minutes" or "every 2 hours"
+  const intervalMatch = text.match(/every (\d+) (minutes?|hours?)/);
+  if (intervalMatch) {
+    const value = intervalMatch[1];
+    const unit = intervalMatch[2];
+    if (unit.startsWith('minute')) {
+      return `*/${value} * * * *`;
+    }
+    if (unit.startsWith('hour')) {
+      return `0 */${value} * * *`;
+    }
   }
 
+  // Daily: "every day at 2pm"
+  const daily = text.match(/every day at (\d{1,2})(?::(\d{2}))?(am|pm)?/);
+  if (daily) {
+    let hour = parseInt(daily[1], 10);
+    const minute = daily[2] ? parseInt(daily[2], 10) : 0;
+    const ampm = daily[3];
+    if (ampm === 'pm' && hour < 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
+    return `${minute} ${hour} * * *`;
+  }
+
+  // Weekly: "every Monday at 9am"
+  const weekly = text.match(
+    /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
+  );
+  if (weekly) {
+    const days: Record<string, number> = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+    let hour = parseInt(weekly[2], 10);
+    const minute = weekly[3] ? parseInt(weekly[3], 10) : 0;
+    const ampm = weekly[4];
+    if (ampm === 'pm' && hour < 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
+    return `${minute} ${hour} * * ${days[weekly[1]]}`;
+  }
+
+  // Monthly: "on 1st of month at 3pm"
+  const monthly = text.match(
+    /on (\d{1,2})(?:st|nd|rd|th) of month at (\d{1,2})(?::(\d{2}))?(am|pm)?/
+  );
+  if (monthly) {
+    const day = parseInt(monthly[1], 10);
+    let hour = parseInt(monthly[2], 10);
+    const minute = monthly[3] ? parseInt(monthly[3], 10) : 0;
+    const ampm = monthly[4];
+    if (ampm === 'pm' && hour < 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
+    return `${minute} ${hour} ${day} * *`;
+  }
+
+  return null;
+}
+
+// --- API Route ---
+export async function POST(req: Request) {
   try {
-    // 1) Call OpenRouter to convert natural text to cron + explanation
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "deepseek/deepseek-r1",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You convert plain English schedules into cron expressions and explain them. Always respond with valid JSON only.",
-            },
-            {
-              role: "user",
-              content: `Convert this schedule to a cron expression: "${natural}". 
-Return JSON in this shape exactly:
-{ "cron": "...", "explanation": "..." }`,
-            },
-          ],
-        }),
+    const body = await req.json();
+    const { query, mode } = body;
+
+    if (!query || !mode) {
+      return NextResponse.json(
+        { ok: false, error: 'Missing query or mode' },
+        { status: 400 }
+      );
+    }
+
+    let cronExp: string | null = null;
+    let humanExp: string | null = null;
+
+    if (mode === 'generate') {
+      cronExp = humanToCron(query);
+      if (!cronExp) {
+        return NextResponse.json(
+          { ok: false, error: 'Could not parse input' },
+          { status: 400 }
+        );
       }
-    );
-
-    if (!response.ok) {
-      const errTxt = await response.text().catch(() => "");
-      return json(response.status, {
-        ok: false,
-        error: `OpenRouter ${response.status}`,
-        details: errTxt?.slice(0, 500),
-      });
-    }
-
-    const data = await response.json();
-    let raw = String(data?.choices?.[0]?.message?.content ?? "")
-      .replace(/```(?:json)?/g, "")
-      .trim();
-
-    let ai: AiShape;
-    try {
-      ai = JSON.parse(raw);
-    } catch {
-      return json(502, {
-        ok: false,
-        error: "AI returned invalid JSON.",
-        details: raw.slice(0, 500),
-      });
-    }
-
-    const cron = ai.cron?.trim();
-    if (!cron) {
-      return json(502, {
-        ok: false,
-        error: "AI did not return a cron expression.",
-      });
-    }
-
-    // 2) Generate next 10 runs with Croner (timezone optional)
-    const tz = "Africa/Addis_Ababa"; // change/remove to taste
-    let runs: string[] = [];
-
-    try {
-      const job = new Cron(cron, { timezone: tz }); // throws if invalid
-      let next = job.nextRun();
-      for (let i = 0; i < 10 && next; i++) {
-        runs.push(format(next, "MMM d, yyyy – h:mm a"));
-        next = job.nextRun(next);
+      humanExp = cronstrue.toString(cronExp);
+    } else if (mode === 'explain') {
+      cronExp = query;
+      try {
+        if (cronExp) {
+          humanExp = cronstrue.toString(cronExp);
+        }
+      } catch {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid cron expression' },
+          { status: 400 }
+        );
       }
-    } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : "Failed to parse cron expression.";
-      return json(422, { ok: false, error: msg, cron });
+    } else {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid mode' },
+        { status: 400 }
+      );
     }
 
-    return json(200, {
+    // Generate next 10 runs safely
+    let nextRuns: string[] = [];
+    try {
+      if (!cronExp) throw new Error('Cron expression is null');
+
+      const interval = CronExpressionParser.parse(cronExp, {
+        tz: 'Africa/Addis_Ababa',
+      });
+
+      for (let i = 0; i < 10; i++) {
+        nextRuns.push(interval.next().toString());
+      }
+    } catch (err) {
+      console.error('Cron parse error:', err, 'for expression:', cronExp);
+      return NextResponse.json(
+        { ok: false, error: 'Failed to generate next runs' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
       ok: true,
-      cron,
-      explanation: ai.explanation ?? "Cron schedule parsed successfully.",
-      runs,
-      timezone: tz,
+      cron: cronExp,
+      explanation: humanExp,
+      nextRuns,
     });
   } catch (err) {
-    console.error("Generate API error:", err);
-    return json(500, { ok: false, error: "Failed to generate cron." });
+    console.error('API error:', err);
+    return NextResponse.json(
+      { ok: false, error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
