@@ -3,8 +3,36 @@ import cronstrue from 'cronstrue';
 import { CronExpressionParser } from 'cron-parser';
 
 // --- Human → Cron conversion ---
+// --- Human → Cron conversion ---
 function humanToCron(input: string): string | null {
   const text = input.toLowerCase().trim();
+
+  // --- New: Handle multiple days ---
+  const multiWeekly = text.match(
+    /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) and (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
+  );
+  if (multiWeekly) {
+    const days: Record<string, number> = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
+    const day1 = days[multiWeekly[1]];
+    const day2 = days[multiWeekly[2]];
+    let hour = parseInt(multiWeekly[3], 10);
+    const minute = multiWeekly[4] ? parseInt(multiWeekly[4], 10) : 0;
+    const ampm = multiWeekly[5];
+
+    if (ampm === 'pm' && hour < 12) hour += 12;
+    if (ampm === 'am' && hour === 12) hour = 0;
+
+    // Return the cron expression with a comma-separated list of days
+    return `${minute} ${hour} * * ${day1},${day2}`;
+  }
 
   // Interval: "every 5 minutes" or "every 2 hours"
   const intervalMatch = text.match(/every (\d+) (minutes?|hours?)/);
@@ -30,7 +58,7 @@ function humanToCron(input: string): string | null {
     return `${minute} ${hour} * * *`;
   }
 
-  // Weekly: "every Monday at 9am"
+  // Weekly: "every Monday at 9am" (this now only handles single days)
   const weekly = text.match(
     /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
   );
@@ -68,7 +96,6 @@ function humanToCron(input: string): string | null {
 
   return null;
 }
-
 // --- API Route ---
 export async function POST(req: Request) {
   try {
