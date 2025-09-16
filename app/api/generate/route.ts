@@ -1,36 +1,56 @@
-import { NextResponse } from 'next/server';
-import cronstrue from 'cronstrue';
-import { CronExpressionParser } from 'cron-parser';
+import { NextResponse } from "next/server";
+import cronstrue from "cronstrue";
+import { CronExpressionParser } from "cron-parser";
 
-// --- Human → Cron conversion ---
 // --- Human → Cron conversion ---
 function humanToCron(input: string): string | null {
   const text = input.toLowerCase().trim();
 
-  // --- New: Handle multiple days ---
+  // Define a type for the days object keys to avoid 'any'
+  type DayName =
+    | "sunday"
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday";
+  const days: Record<DayName, number> = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+
+  // New: Handle "at 0 0 on 1st of month"
+  const monthlySpecific = text.match(
+    /at (\d{1,2}) (\d{1,2}) on (\d{1,2})(?:st|nd|rd|th) of month/
+  );
+  if (monthlySpecific) {
+    const minute = parseInt(monthlySpecific[1], 10);
+    const hour = parseInt(monthlySpecific[2], 10);
+    const day = parseInt(monthlySpecific[3], 10);
+    return `${minute} ${hour} ${day} * *`;
+  }
+
+  // New: Handle multiple days
   const multiWeekly = text.match(
     /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) and (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
   );
   if (multiWeekly) {
-    const days: Record<string, number> = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
-    const day1 = days[multiWeekly[1]];
-    const day2 = days[multiWeekly[2]];
+    // Explicitly cast to the correct type to resolve the 'any' error
+    const day1 = days[multiWeekly[1] as DayName];
+    const day2 = days[multiWeekly[2] as DayName];
     let hour = parseInt(multiWeekly[3], 10);
     const minute = multiWeekly[4] ? parseInt(multiWeekly[4], 10) : 0;
     const ampm = multiWeekly[5];
 
-    if (ampm === 'pm' && hour < 12) hour += 12;
-    if (ampm === 'am' && hour === 12) hour = 0;
+    if (ampm === "pm" && hour < 12) hour += 12;
+    if (ampm === "am" && hour === 12) hour = 0;
 
-    // Return the cron expression with a comma-separated list of days
     return `${minute} ${hour} * * ${day1},${day2}`;
   }
 
@@ -39,10 +59,10 @@ function humanToCron(input: string): string | null {
   if (intervalMatch) {
     const value = intervalMatch[1];
     const unit = intervalMatch[2];
-    if (unit.startsWith('minute')) {
+    if (unit.startsWith("minute")) {
       return `*/${value} * * * *`;
     }
-    if (unit.startsWith('hour')) {
+    if (unit.startsWith("hour")) {
       return `0 */${value} * * *`;
     }
   }
@@ -53,8 +73,8 @@ function humanToCron(input: string): string | null {
     let hour = parseInt(daily[1], 10);
     const minute = daily[2] ? parseInt(daily[2], 10) : 0;
     const ampm = daily[3];
-    if (ampm === 'pm' && hour < 12) hour += 12;
-    if (ampm === 'am' && hour === 12) hour = 0;
+    if (ampm === "pm" && hour < 12) hour += 12;
+    if (ampm === "am" && hour === 12) hour = 0;
     return `${minute} ${hour} * * *`;
   }
 
@@ -63,21 +83,15 @@ function humanToCron(input: string): string | null {
     /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
   );
   if (weekly) {
-    const days: Record<string, number> = {
-      sunday: 0,
-      monday: 1,
-      tuesday: 2,
-      wednesday: 3,
-      thursday: 4,
-      friday: 5,
-      saturday: 6,
-    };
+    // Explicitly cast to the correct type to resolve the 'any' error
+    const dayName = weekly[1] as DayName;
+    const day = days[dayName];
     let hour = parseInt(weekly[2], 10);
     const minute = weekly[3] ? parseInt(weekly[3], 10) : 0;
     const ampm = weekly[4];
-    if (ampm === 'pm' && hour < 12) hour += 12;
-    if (ampm === 'am' && hour === 12) hour = 0;
-    return `${minute} ${hour} * * ${days[weekly[1]]}`;
+    if (ampm === "pm" && hour < 12) hour += 12;
+    if (ampm === "am" && hour === 12) hour = 0;
+    return `${minute} ${hour} * * ${day}`;
   }
 
   // Monthly: "on 1st of month at 3pm"
@@ -89,8 +103,8 @@ function humanToCron(input: string): string | null {
     let hour = parseInt(monthly[2], 10);
     const minute = monthly[3] ? parseInt(monthly[3], 10) : 0;
     const ampm = monthly[4];
-    if (ampm === 'pm' && hour < 12) hour += 12;
-    if (ampm === 'am' && hour === 12) hour = 0;
+    if (ampm === "pm" && hour < 12) hour += 12;
+    if (ampm === "am" && hour === 12) hour = 0;
     return `${minute} ${hour} ${day} * *`;
   }
 
@@ -104,7 +118,7 @@ export async function POST(req: Request) {
 
     if (!query || !mode) {
       return NextResponse.json(
-        { ok: false, error: 'Missing query or mode' },
+        { ok: false, error: "Missing query or mode" },
         { status: 400 }
       );
     }
@@ -112,16 +126,16 @@ export async function POST(req: Request) {
     let cronExp: string | null = null;
     let humanExp: string | null = null;
 
-    if (mode === 'generate') {
+    if (mode === "generate") {
       cronExp = humanToCron(query);
       if (!cronExp) {
         return NextResponse.json(
-          { ok: false, error: 'Could not parse input' },
+          { ok: false, error: "Could not parse input" },
           { status: 400 }
         );
       }
       humanExp = cronstrue.toString(cronExp);
-    } else if (mode === 'explain') {
+    } else if (mode === "explain") {
       cronExp = query;
       try {
         if (cronExp) {
@@ -129,13 +143,13 @@ export async function POST(req: Request) {
         }
       } catch {
         return NextResponse.json(
-          { ok: false, error: 'Invalid cron expression' },
+          { ok: false, error: "Invalid cron expression" },
           { status: 400 }
         );
       }
     } else {
       return NextResponse.json(
-        { ok: false, error: 'Invalid mode' },
+        { ok: false, error: "Invalid mode" },
         { status: 400 }
       );
     }
@@ -143,19 +157,19 @@ export async function POST(req: Request) {
     // Generate next 10 runs safely
     let nextRuns: string[] = [];
     try {
-      if (!cronExp) throw new Error('Cron expression is null');
+      if (!cronExp) throw new Error("Cron expression is null");
 
       const interval = CronExpressionParser.parse(cronExp, {
-        tz: 'Africa/Addis_Ababa',
+        tz: "Africa/Addis_Ababa",
       });
 
       for (let i = 0; i < 10; i++) {
         nextRuns.push(interval.next().toString());
       }
     } catch (err) {
-      console.error('Cron parse error:', err, 'for expression:', cronExp);
+      console.error("Cron parse error:", err, "for expression:", cronExp);
       return NextResponse.json(
-        { ok: false, error: 'Failed to generate next runs' },
+        { ok: false, error: "Failed to generate next runs" },
         { status: 500 }
       );
     }
@@ -167,9 +181,9 @@ export async function POST(req: Request) {
       nextRuns,
     });
   } catch (err) {
-    console.error('API error:', err);
+    console.error("API error:", err);
     return NextResponse.json(
-      { ok: false, error: 'Internal Server Error' },
+      { ok: false, error: "Internal Server Error" },
       { status: 500 }
     );
   }

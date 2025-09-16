@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, Loader, Loader2, Trash2 } from 'lucide-react';
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Copy, Loader, Loader2, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
-type Mode = 'generate' | 'explain';
+type Mode = "generate" | "explain";
 
 // Define a type that accurately reflects the API response.
 type ApiResponse = {
@@ -23,8 +23,8 @@ type ApiResponse = {
 };
 
 export default function GenerateCronPage() {
-  const [query, setQuery] = useState('');
-  const [mode, setMode] = useState<Mode>('generate');
+  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState<Mode>("generate");
   // Use the new ApiResponse type for the result state.
   const [result, setResult] = useState<null | ApiResponse>(null);
   const [history, setHistory] = useState<
@@ -34,11 +34,11 @@ export default function GenerateCronPage() {
       result: ApiResponse; // Use the new ApiResponse type for history items.
     }[]
   >([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // --- helpers
-  const cronLabels = ['Minute', 'Hour', 'Day of Month', 'Month', 'Day of Week'];
+  const cronLabels = ["Minute", "Hour", "Day of Month", "Month", "Day of Week"];
   const splitCron = (cron: string) => cron.trim().split(/\s+/);
 
   const isValidCron5 = (cron: string) => {
@@ -62,32 +62,32 @@ export default function GenerateCronPage() {
   // --- submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting:', { query, mode });
+    console.log("Submitting:", { query, mode });
     setLoading(true);
-    setError('');
+    setError("");
     setResult(null);
 
     if (!query.trim()) return;
 
-    if (mode === 'explain' && !isValidCron5(query)) {
-      setError('Please enter a valid 5-field cron (e.g., */5 * * * *).');
+    if (mode === "explain" && !isValidCron5(query)) {
+      setError("Please enter a valid 5-field cron (e.g., */5 * * * *).");
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, mode }),
       });
 
       const data: ApiResponse = await res.json();
 
-      console.log('API response:', data);
+      console.log("API response:", data);
 
       if (!res.ok) {
-        setError(data.explanation || 'Something went wrong.');
+        setError(data.explanation || "Something went wrong.");
         return;
       }
 
@@ -98,7 +98,7 @@ export default function GenerateCronPage() {
       ]);
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch result.');
+      setError("Failed to fetch result.");
     } finally {
       setLoading(false);
     }
@@ -112,12 +112,12 @@ export default function GenerateCronPage() {
     setQuery(item.query);
     setMode(item.mode);
     setResult(item.result);
-    setError('');
+    setError("");
   };
 
   const handlePreset = (preset: string) => {
     setQuery(preset);
-    setError('');
+    setError("");
   };
 
   const clearHistory = () => setHistory([]);
@@ -127,34 +127,36 @@ export default function GenerateCronPage() {
       {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold sm:text-4xl">
-          {mode === 'generate' ? 'Generate a Cron' : 'Explain a Cron'}
+          {mode === "generate" ? "Generate a Cron" : "Explain a Cron"}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {mode === 'generate'
-            ? 'Type a plain English schedule below and let CronEase do the magic ✨'
-            : 'Paste a cron expression to get a plain English explanation and next run times.'}
+          {mode === "generate"
+            ? "Type a plain English schedule below and let CronEase do the magic ✨"
+            : "Paste a cron expression to get a plain English explanation and next run times."}
         </p>
       </div>
 
       {/* Mode toggle */}
       <div className="flex justify-center mb-6">
-        <div className="flex rounded-md shadow-sm">
+        <div className="flex items-center rounded-full bg-muted p-1">
           <Button
-            onClick={() => setMode('generate')}
-            className={`rounded-r-none ${
-              mode === 'generate'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            onClick={() => setMode("generate")}
+            variant="ghost"
+            className={`rounded-full px-4 py-2 ${
+              mode === "generate"
+                ? "bg-background shadow-sm border-2 border-orange-600 text-foreground"
+                : "text-muted-foreground"
             }`}
           >
             Plain English to Cron
           </Button>
           <Button
-            onClick={() => setMode('explain')}
-            className={`rounded-l-none ${
-              mode === 'explain'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            onClick={() => setMode("explain")}
+            variant="ghost"
+            className={`rounded-full px-4 py-2 ${
+              mode === "explain"
+                ? "bg-background shadow-sm border-2 border-orange-600 text-foreground"
+                : "text-muted-foreground"
             }`}
           >
             Cron to Plain English
@@ -166,10 +168,10 @@ export default function GenerateCronPage() {
       <form onSubmit={handleSubmit} className="mx-auto flex max-w-2xl gap-2">
         <Input
           aria-label={
-            mode === 'generate' ? 'Natural language input' : 'Cron input'
+            mode === "generate" ? "Natural language input" : "Cron input"
           }
           placeholder={
-            mode === 'generate'
+            mode === "generate"
               ? 'e.g. "Run every Monday at 9am"'
               : 'e.g. "*/5 * * * *"'
           }
@@ -179,10 +181,10 @@ export default function GenerateCronPage() {
         <Button type="submit" disabled={loading}>
           {loading ? (
             <Loader className="h-4 w-4 animate-spin" />
-          ) : mode === 'generate' ? (
-            'Generate'
+          ) : mode === "generate" ? (
+            "Generate"
           ) : (
-            'Explain'
+            "Explain"
           )}
         </Button>
       </form>
@@ -231,7 +233,7 @@ export default function GenerateCronPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>
-                  {mode === 'generate' ? 'Cron Expression' : 'Your Cron'}
+                  {mode === "generate" ? "Cron Expression" : "Your Cron"}
                 </CardTitle>
                 <Button
                   size="icon"
@@ -330,9 +332,9 @@ export default function GenerateCronPage() {
                           {item.query}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {item.mode === 'generate'
-                            ? 'English to Cron'
-                            : 'Cron to English'}
+                          {item.mode === "generate"
+                            ? "English to Cron"
+                            : "Cron to English"}
                         </p>
                       </li>
                     ))}
