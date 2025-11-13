@@ -1,8 +1,7 @@
-// /api/explain/route.ts
-
 import { NextResponse } from "next/server";
 import cronstrue from "cronstrue";
-import { CronExpression } from "cron-parser";
+import { CronExpressionParser } from "cron-parser";
+
 export async function POST(req: Request) {
   try {
     const { cron } = await req.json();
@@ -17,24 +16,24 @@ export async function POST(req: Request) {
     let humanExp: string;
     try {
       humanExp = cronstrue.toString(cron);
-    } catch (err) {
+    } catch {
       return NextResponse.json(
         { ok: false, error: "Invalid cron expression" },
         { status: 400 }
       );
     }
 
-    let nextRuns: string[] = [];
+    const nextRuns: string[] = [];
     try {
-      // Use the 'new' keyword to create an instance of the class
-      const interval = new CronExpression(cron, {
+      const interval = CronExpressionParser.parse(cron, {
         tz: "Africa/Addis_Ababa",
       });
+
       for (let i = 0; i < 10; i++) {
         nextRuns.push(interval.next().toString());
       }
-    } catch (err) {
-      console.error("Cron parse error:", err, "for expression:", cron);
+    } catch (error) {
+      console.error("Cron parse error:", error, "for expression:", cron);
       return NextResponse.json(
         { ok: false, error: "Failed to generate next runs" },
         { status: 500 }
@@ -43,12 +42,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       ok: true,
-      cron: cron,
+      cron,
       explanation: humanExp,
-      nextRuns: nextRuns,
+      nextRuns,
     });
-  } catch (err) {
-    console.error("API error:", err);
+  } catch (error) {
+    console.error("API error:", error);
     return NextResponse.json(
       { ok: false, error: "Internal Server Error" },
       { status: 500 }

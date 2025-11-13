@@ -8,7 +8,6 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import Image from "next/image";
 
 export default function Home() {
   return (
@@ -35,8 +34,8 @@ export default function Home() {
 
               <p className="max-w-4xl text-balance text-lg sm:text-xl text-muted-foreground mt-6">
                 No more syntax headaches. Just describe your schedule in plain
-                English and let CronEase generate the perfect cron expression —
-                with explanations and next run times.
+                English and let CronEase generate the perfect cron expression
+                &mdash; with explanations and next run times.
               </p>
 
               {/* CTA */}
@@ -71,7 +70,7 @@ export default function Home() {
 
                   <p className="text-sm text-muted-foreground mb-2">Input:</p>
                   <div className="bg-muted rounded px-3 py-2 mb-4 text-sm">
-                    "Run every Monday at 9am"
+                    {'"Run every Monday at 9am"'}
                   </div>
 
                   <p className="text-sm text-muted-foreground mb-2">
@@ -182,7 +181,6 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             {/* Logo and brand */}
             <div className="flex items-center gap-3">
-              {/* Clock-inspired logo */}
               <div className="relative h-10 w-10 flex items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/70 rounded-full"></div>
                 <div className="absolute h-4 w-0.5 bg-background rounded-full transform translate-y-1"></div>

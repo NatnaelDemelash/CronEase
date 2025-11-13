@@ -6,7 +6,6 @@ import { CronExpressionParser } from "cron-parser";
 function humanToCron(input: string): string | null {
   const text = input.toLowerCase().trim();
 
-  // Define a type for the days object keys to avoid 'any'
   type DayName =
     | "sunday"
     | "monday"
@@ -15,6 +14,7 @@ function humanToCron(input: string): string | null {
     | "thursday"
     | "friday"
     | "saturday";
+
   const days: Record<DayName, number> = {
     sunday: 0,
     monday: 1,
@@ -25,7 +25,7 @@ function humanToCron(input: string): string | null {
     saturday: 6,
   };
 
-  // New: Handle "at 0 0 on 1st of month"
+  // Handle "at 0 0 on 1st of month"
   const monthlySpecific = text.match(
     /at (\d{1,2}) (\d{1,2}) on (\d{1,2})(?:st|nd|rd|th) of month/
   );
@@ -36,12 +36,11 @@ function humanToCron(input: string): string | null {
     return `${minute} ${hour} ${day} * *`;
   }
 
-  // New: Handle multiple days
+  // Handle multiple days: "every Monday and Friday at 9am"
   const multiWeekly = text.match(
     /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) and (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
   );
   if (multiWeekly) {
-    // Explicitly cast to the correct type to resolve the 'any' error
     const day1 = days[multiWeekly[1] as DayName];
     const day2 = days[multiWeekly[2] as DayName];
     let hour = parseInt(multiWeekly[3], 10);
@@ -59,12 +58,8 @@ function humanToCron(input: string): string | null {
   if (intervalMatch) {
     const value = intervalMatch[1];
     const unit = intervalMatch[2];
-    if (unit.startsWith("minute")) {
-      return `*/${value} * * * *`;
-    }
-    if (unit.startsWith("hour")) {
-      return `0 */${value} * * *`;
-    }
+    if (unit.startsWith("minute")) return `*/${value} * * * *`;
+    if (unit.startsWith("hour")) return `0 */${value} * * *`;
   }
 
   // Daily: "every day at 2pm"
@@ -78,12 +73,11 @@ function humanToCron(input: string): string | null {
     return `${minute} ${hour} * * *`;
   }
 
-  // Weekly: "every Monday at 9am" (this now only handles single days)
+  // Weekly: "every Monday at 9am"
   const weekly = text.match(
     /every (sunday|monday|tuesday|wednesday|thursday|friday|saturday) at (\d{1,2})(?::(\d{2}))?(am|pm)?/
   );
   if (weekly) {
-    // Explicitly cast to the correct type to resolve the 'any' error
     const dayName = weekly[1] as DayName;
     const day = days[dayName];
     let hour = parseInt(weekly[2], 10);
@@ -110,6 +104,7 @@ function humanToCron(input: string): string | null {
 
   return null;
 }
+
 // --- API Route ---
 export async function POST(req: Request) {
   try {
@@ -138,9 +133,7 @@ export async function POST(req: Request) {
     } else if (mode === "explain") {
       cronExp = query;
       try {
-        if (cronExp) {
-          humanExp = cronstrue.toString(cronExp);
-        }
+        if (cronExp) humanExp = cronstrue.toString(cronExp);
       } catch {
         return NextResponse.json(
           { ok: false, error: "Invalid cron expression" },
@@ -155,7 +148,7 @@ export async function POST(req: Request) {
     }
 
     // Generate next 10 runs safely
-    let nextRuns: string[] = [];
+    const nextRuns: string[] = [];
     try {
       if (!cronExp) throw new Error("Cron expression is null");
 
@@ -166,8 +159,8 @@ export async function POST(req: Request) {
       for (let i = 0; i < 10; i++) {
         nextRuns.push(interval.next().toString());
       }
-    } catch (err) {
-      console.error("Cron parse error:", err, "for expression:", cronExp);
+    } catch (_err) {
+      console.error("Cron parse error for expression:", cronExp);
       return NextResponse.json(
         { ok: false, error: "Failed to generate next runs" },
         { status: 500 }
@@ -180,8 +173,8 @@ export async function POST(req: Request) {
       explanation: humanExp,
       nextRuns,
     });
-  } catch (err) {
-    console.error("API error:", err);
+  } catch (_err) {
+    console.error("API error:", _err);
     return NextResponse.json(
       { ok: false, error: "Internal Server Error" },
       { status: 500 }
