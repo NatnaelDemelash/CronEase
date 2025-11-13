@@ -52,7 +52,7 @@ export default function DocsPage() {
             </p>
             <pre className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm font-mono text-primary-foreground/90">
               <span className="block text-primary-foreground">
-                "Run every day at 2pm"
+                {'"Run every day at 2pm"'}
               </span>
               <span className="block text-primary">➡ 0 14 * * *</span>
             </pre>
